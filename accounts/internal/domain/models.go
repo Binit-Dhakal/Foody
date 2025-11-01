@@ -27,8 +27,8 @@ type User struct {
 
 // UserProfile stores customer or vendor profile information
 type UserProfile struct {
-	ID             uint64
-	UserID         uint64
+	ID             string
+	UserID         string
 	ProfilePicture string
 	CoverPhoto     string
 	AddressLine1   string
@@ -43,10 +43,10 @@ type UserProfile struct {
 	UpdatedAt      time.Time
 }
 
-// Vendor represents a restaurant or food vendor
+// Vendor represents a restaurant only information
 type Vendor struct {
-	ID            uint64
-	UserID        uint64
+	ID            string
+	UserID        string
 	VendorName    string
 	VendorLicense string
 	IsApproved    bool
