@@ -2,16 +2,23 @@ package postgres
 
 import (
 	"context"
+	"time"
 
 	"github.com/Binit-Dhakal/Foody/accounts/internal/domain"
 	"github.com/Binit-Dhakal/Foody/internal/db"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type userRepository struct {
+	pool *pgxpool.Pool
 }
 
-func NewUserRepository() domain.UserRepository {
-	return &userRepository{}
+var _ domain.UserRepository = (*userRepository)(nil)
+
+func NewUserRepository(pool *pgxpool.Pool) domain.UserRepository {
+	return &userRepository{
+		pool: pool,
+	}
 }
 
 func (u *userRepository) CreateUser(ctx context.Context, tx db.Tx, user *domain.User) error {
@@ -26,7 +33,7 @@ func (u *userRepository) CreateUser(ctx context.Context, tx db.Tx, user *domain.
 
 func (u *userRepository) CreateUserProfile(ctx context.Context, tx db.Tx, profile *domain.UserProfile) error {
 	queryProfile := `
-		INSERT into user_profile (user_id, created_at, updated_at)
+		INSERT into user_profiles (user_id, created_at, updated_at)
 		VALUES ($1, NOW(), NOW())
 		RETURNING id
 	`
@@ -40,4 +47,42 @@ func (u *userRepository) CreateVendor(ctx context.Context, tx db.Tx, vendor *dom
 		RETURNING id;
 	`
 	return tx.QueryRow(ctx, queryVendor, vendor.UserID, vendor.VendorName, vendor.VendorLicense).Scan(&vendor.ID)
+}
+
+func (u *userRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
+	queryByEmail := `
+		SELECT id, full_name, email, phone_number, is_admin, password_hash from users where email=$1
+	`
+
+	var user domain.User
+	err := u.pool.QueryRow(ctx, queryByEmail, email).Scan(
+		&user.ID,
+		&user.Name,
+		&user.Email,
+		&user.PhoneNumber,
+		&user.IsAdmin,
+		&user.PasswordHash,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (u *userRepository) UpdateUser(ctx context.Context, tx db.Tx, user *domain.User) error {
+	query := `
+		UPDATE users
+		SET full_name=$1,
+			email=$2,
+			phone_number=$3,
+			is_admin=$4,
+			last_login=$5,
+			password_hash=$6,
+			updated_at=$7
+		WHERE id=$8
+	`
+	args := []any{user.Name, user.Email, user.PhoneNumber, user.IsAdmin, user.LastLogin, user.PasswordHash, time.Now()}
+	_, err := tx.Exec(ctx, query, args...)
+	return err
 }

@@ -15,11 +15,20 @@ type (
 		Conn string `required:"true"`
 	}
 
+	SMTPConfig struct {
+		Host     string `required:"true"`
+		Port     int    `required:"true"`
+		Username string `required:"true"`
+		Password string `required:"true"`
+		Sender   string `required:"true"`
+	}
+
 	AppConfig struct {
 		Environment     string
 		LogLevel        string `envconfig:"LOG_LEVEL" default:"DEBUG"`
 		PG              PGConfig
 		Web             WebConfig
+		SMTP            SMTPConfig
 		ShutdownTimeout time.Duration `envconfig:"SHUTDOWN_TIMEOUT" default:"30s"`
 	}
 )

@@ -1,0 +1,26 @@
+{{define "subject"}}Welcome to Foody exclusive resturant!{{end}}
+{{define "plainBody"}}
+Hi,
+Thanks for signing up for a Foody vendor account. We're excited to have you on board!
+Please wait patiently for your vendor account to be approved. Fill all the profile details. Our Vendor Service will shortly contact you for further details if needed.
+For future reference, your user ID number is {{.ID}}.
+Thanks,
+The Foody Team
+{{end}}
+{{define "htmlBody"}}
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width" />
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+<p>Hi,</p>
+<p>Thanks for signing up for a Foody vendor account. We're excited to have you on board!<p>
+<p>Please wait patiently for your vendor account to be approved. Fill all the profile details. Our Vendor Service will shortly contact you for further details if needed.</p>
+<p>For future reference, your user ID number is {{.ID}}.</p>
+<p>Thanks,</p>
+<p>The Foody Team</p>
+</body>
+</html>
+{{end}}

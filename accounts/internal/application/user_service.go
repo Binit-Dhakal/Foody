@@ -2,9 +2,12 @@ package application
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Binit-Dhakal/Foody/accounts/internal/domain"
 	"github.com/Binit-Dhakal/Foody/internal/db"
+	"github.com/Binit-Dhakal/Foody/internal/mailer"
+	"github.com/Binit-Dhakal/Foody/internal/monolith"
 	"github.com/Binit-Dhakal/Foody/internal/utils"
 )
 
@@ -14,14 +17,18 @@ type UserService interface {
 }
 
 type userService struct {
-	uow  db.UnitOfWork
-	repo domain.UserRepository
+	background monolith.BackgroundRunner
+	uow        db.UnitOfWork
+	repo       domain.UserRepository
+	mailer     *mailer.Mailer
 }
 
-func NewUserService(uow db.UnitOfWork, repo domain.UserRepository) UserService {
+func NewUserService(uow db.UnitOfWork, repo domain.UserRepository, mailer *mailer.Mailer, background monolith.BackgroundRunner) UserService {
 	return &userService{
-		uow:  uow,
-		repo: repo,
+		uow:        uow,
+		repo:       repo,
+		background: background,
+		mailer:     mailer,
 	}
 }
 
@@ -54,7 +61,20 @@ func (u *userService) RegisterCustomer(ctx context.Context, dto *domain.Register
 		return err
 	}
 
-	return tx.Commit(ctx)
+	if err = tx.Commit(ctx); err != nil {
+		return err
+	}
+
+	u.background.Run(func() {
+		err = u.mailer.Send(user.Email, "user_registration.tmpl", user)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	})
+
+	// we need to send user detail
+	return nil
 }
 
 func (u *userService) RegisterVendor(ctx context.Context, dto *domain.RegisterResturantRequest) error {
@@ -95,6 +115,17 @@ func (u *userService) RegisterVendor(ctx context.Context, dto *domain.RegisterRe
 		return err
 	}
 
-	return tx.Commit(ctx)
+	if err := tx.Commit(ctx); err != nil {
+		return err
+	}
 
+	u.background.Run(func() {
+		err = u.mailer.Send(user.Email, "user_registration.tmpl", user)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	})
+
+	return nil
 }

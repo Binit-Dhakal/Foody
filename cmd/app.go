@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/Binit-Dhakal/Foody/internal/config"
+	"github.com/Binit-Dhakal/Foody/internal/mailer"
 	"github.com/Binit-Dhakal/Foody/internal/monolith"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -19,10 +20,18 @@ type app struct {
 	logger  zerolog.Logger
 	modules []monolith.Module
 	mux     *chi.Mux
+	bg      *backgroundRunner
+	mailer  *mailer.Mailer
 }
+
+var _ monolith.Monolith = (*app)(nil)
 
 func (a *app) Config() config.AppConfig {
 	return a.cfg
+}
+
+func (a *app) Background() monolith.BackgroundRunner {
+	return a.bg
 }
 
 func (a *app) DB() *pgxpool.Pool {
@@ -35,6 +44,10 @@ func (a *app) Logger() zerolog.Logger {
 
 func (a *app) Mux() *chi.Mux {
 	return a.mux
+}
+
+func (a *app) Mailer() *mailer.Mailer {
+	return a.mailer
 }
 
 func (a *app) startupModules() error {

@@ -1,5 +1,5 @@
 # .air.toml — Air config for hot reload
-root = "."
+root = "/app"
 tmp_dir = "tmp"
 
 [build]

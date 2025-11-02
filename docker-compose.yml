@@ -11,7 +11,9 @@ services:
       - docker/.env
     depends_on:
       - postgres
-    command: [ "./docker/wait-for.sh", "postgres:5432", "--", "air", "-c", ".air.toml" ]
+    command: [ "/app/docker/wait-for.sh", "postgres:5432", "--", "air", "-c", ".air.toml" ]
+    volumes:
+      - .:/app
 
   postgres:
     image: postgres:16
