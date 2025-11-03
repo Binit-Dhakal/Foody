@@ -32,6 +32,7 @@ type (
 		LogLevel        string `envconfig:"LOG_LEVEL" default:"DEBUG"`
 		PG              PGConfig
 		Web             WebConfig
+		Rpc             RpcConfig
 		SMTP            SMTPConfig
 		JWT             JWTSecret
 		ShutdownTimeout time.Duration `envconfig:"SHUTDOWN_TIMEOUT" default:"30s"`
@@ -44,6 +45,15 @@ type WebConfig struct {
 }
 
 func (c WebConfig) Address() string {
+	return fmt.Sprintf("%s%s", c.Host, c.Port)
+}
+
+type RpcConfig struct {
+	Host string `default:"0.0.0.0"`
+	Port string `default:":8085"`
+}
+
+func (c RpcConfig) Address() string {
 	return fmt.Sprintf("%s%s", c.Host, c.Port)
 }
 

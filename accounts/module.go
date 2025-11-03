@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Binit-Dhakal/Foody/accounts/internal/application"
+	"github.com/Binit-Dhakal/Foody/accounts/internal/grpc"
 	"github.com/Binit-Dhakal/Foody/accounts/internal/repository/postgres"
 	"github.com/Binit-Dhakal/Foody/accounts/internal/rest"
 	"github.com/Binit-Dhakal/Foody/internal/db"
@@ -31,6 +32,10 @@ func (Module) Startup(ctx context.Context, mono monolith.Monolith) (err error) {
 	mux.Post("/api/accounts/registerVendor", restHandler.RegisterResturant)
 	mux.Post("/api/accounts/login", restHandler.AuthenticateUser)
 	mux.Get("/api/accounts/logout", restHandler.LogoutUser)
+
+	if err := grpc.RegisterServer(authSvc, mono.RPC()); err != nil {
+		return err
+	}
 
 	return nil
 }

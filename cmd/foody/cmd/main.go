@@ -1,18 +1,24 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 
 	"github.com/Binit-Dhakal/Foody/accounts"
+	clientgrpc "github.com/Binit-Dhakal/Foody/cmd/foody/internal/grpc"
+	middleware "github.com/Binit-Dhakal/Foody/cmd/foody/internal/middleware"
+	"github.com/Binit-Dhakal/Foody/cmd/foody/internal/utils"
 	"github.com/Binit-Dhakal/Foody/internal/config"
 	"github.com/Binit-Dhakal/Foody/internal/logger"
 	"github.com/Binit-Dhakal/Foody/internal/mailer"
 	"github.com/Binit-Dhakal/Foody/internal/monolith"
 	"github.com/Binit-Dhakal/Foody/internal/setup"
+	"github.com/Binit-Dhakal/Foody/internal/waiter"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/httplog"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/reflection"
 )
 
 func main() {
@@ -33,8 +39,14 @@ func infraSetup(app *app) (err error) {
 		LogLevel:    logger.Level(app.cfg.LogLevel),
 	})
 
+	// Web Server
 	app.mux = chi.NewMux()
 	app.mux.Use(httplog.RequestLogger(app.logger))
+
+	// GRPC server
+	server := grpc.NewServer()
+	reflection.Register(server)
+	app.rpc = server
 
 	app.mailer, err = mailer.NewMailer(
 		app.cfg.SMTP.Host,
@@ -47,7 +59,8 @@ func infraSetup(app *app) (err error) {
 		return err
 	}
 
-	app.bg = newBackgroundRunner(app.logger)
+	app.waiter = waiter.New(waiter.CatchSignals())
+	app.bg = utils.NewBackgroundRunner(app.logger)
 
 	return nil
 }
@@ -66,6 +79,17 @@ func run() (err error) {
 	}
 
 	defer m.bg.Wait()
+
+	conn, err := grpc.NewClient(m.Config().Rpc.Address(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return err
+	}
+
+	accountsClient := clientgrpc.NewAccountRepository(conn)
+	authMiddleware := middleware.AuthenticateMiddleware(accountsClient, []byte(m.Config().JWT.Secret))
+
+	m.mux.Use(authMiddleware)
+
 	m.modules = []monolith.Module{
 		&accounts.Module{},
 	}
@@ -77,5 +101,10 @@ func run() (err error) {
 	m.logger.Info().Msg("Foody Started")
 	defer m.logger.Info().Msg("Foody Closed")
 
-	return m.waitForWeb(context.Background())
+	m.waiter.Add(
+		m.waitForWeb,
+		m.waitForRPC,
+	)
+
+	return m.waiter.Wait()
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
+	"google.golang.org/grpc"
 )
 
 type BackgroundRunner interface {
@@ -21,6 +22,7 @@ type Monolith interface {
 	Mux() *chi.Mux
 	Background() BackgroundRunner
 	Mailer() *mailer.Mailer
+	RPC() *grpc.Server
 }
 
 type Module interface {

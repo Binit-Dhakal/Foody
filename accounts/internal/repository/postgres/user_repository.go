@@ -51,7 +51,7 @@ func (u *userRepository) CreateVendor(ctx context.Context, tx db.Tx, vendor *dom
 
 func (u *userRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	queryByEmail := `
-		SELECT id, full_name, email, phone_number, is_admin, password_hash from users where email=$1
+		SELECT id, full_name, email, phone_number,role, is_admin, password_hash from users where email=$1
 	`
 
 	var user domain.User
@@ -60,6 +60,7 @@ func (u *userRepository) GetByEmail(ctx context.Context, email string) (*domain.
 		&user.Name,
 		&user.Email,
 		&user.PhoneNumber,
+		&user.Role,
 		&user.IsAdmin,
 		&user.PasswordHash,
 	)

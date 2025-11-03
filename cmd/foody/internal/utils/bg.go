@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"sync"
@@ -6,19 +6,19 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type backgroundRunner struct {
+type BackgroundRunner struct {
 	wg     *sync.WaitGroup
 	logger zerolog.Logger
 }
 
-func newBackgroundRunner(logger zerolog.Logger) *backgroundRunner {
-	return &backgroundRunner{
+func NewBackgroundRunner(logger zerolog.Logger) *BackgroundRunner {
+	return &BackgroundRunner{
 		wg:     &sync.WaitGroup{},
 		logger: logger,
 	}
 }
 
-func (b *backgroundRunner) Run(fn func()) {
+func (b *BackgroundRunner) Run(fn func()) {
 	b.wg.Add(1)
 	go func() {
 		defer b.wg.Done()
@@ -31,6 +31,6 @@ func (b *backgroundRunner) Run(fn func()) {
 	}()
 }
 
-func (b *backgroundRunner) Wait() {
+func (b *BackgroundRunner) Wait() {
 	b.wg.Wait()
 }

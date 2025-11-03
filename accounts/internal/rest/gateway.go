@@ -8,11 +8,13 @@ import (
 	"net/http"
 	"time"
 
+	"runtime/debug"
+
 	"github.com/Binit-Dhakal/Foody/accounts/internal/application"
 	"github.com/Binit-Dhakal/Foody/accounts/internal/domain"
 	"github.com/Binit-Dhakal/Foody/internal/cookies"
+	ctxutil "github.com/Binit-Dhakal/Foody/internal/ctxutils"
 	"github.com/go-chi/chi/v5"
-	"runtime/debug"
 )
 
 type AccountHandler struct {
@@ -30,6 +32,7 @@ func NewAccountHandler(mux *chi.Mux, userSvc application.UserService, authSvc ap
 }
 
 func (h *AccountHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(ctxutil.GetContext(r.Context(), ctxutil.UserContextKey))
 	var req domain.RegisterUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid request payload", http.StatusBadRequest)
