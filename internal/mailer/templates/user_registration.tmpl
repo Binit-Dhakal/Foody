@@ -1,24 +1,38 @@
-{{define "subject"}}Welcome to Foody!{{end}}
-{{define "plainBody"}}
-Hi,
-Thanks for signing up for a Foody account. We're excited to have you on board!
-For future reference, your user ID number is {{.ID}}.
+{{ define "subject" }}Welcome to Foody!{{ end }}
+{{ define "plainBody" }}
+Hi {{.Name}},
+Thanks for signing up for a Foody account! We're excited to have you on board.
+To activate your account, please click the link below:
+{{.ActivationURL}}
+If you didn’t create an account, you can safely ignore this email.
 Thanks,
 The Foody Team
-{{end}}
-{{define "htmlBody"}}
-<!doctype html>
+{{ end }}
+{{ define "htmlBody" }}
+<!DOCTYPE html>
 <html>
-<head>
-<meta name="viewport" content="width=device-width" />
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-</head>
-<body>
-<p>Hi,</p>
-<p>Thanks for signing up for a Foody account. We're excited to have you on board!</p>
-<p>For future reference, your user ID number is {{.ID}}.</p>
-<p>Thanks,</p>
-<p>The Foody Team</p>
-</body>
+    <head>
+        <meta name="viewport" content="width=device-width" />
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    </head>
+    <body>
+        <p>Hi {{.Name}},</p>
+        <p>Thanks for signing up for a Foody account! We're excited to have you on board.</p>
+        <p>To activate your account, please click the link below:</p>
+        <p>
+            <a href="{{.ActivationURL}}"
+               style="background-color: #4CAF50;
+                      color: white;
+                      padding: 10px 20px;
+                      text-decoration: none;
+                      border-radius: 5px">Activate Account</a>
+        </p>
+        <p>If you didn’t create an account, you can safely ignore this email.</p>
+        <p>
+            Thanks,
+            <br />
+            The Foody Team
+        </p>
+    </body>
 </html>
-{{end}}
+{{ end }}

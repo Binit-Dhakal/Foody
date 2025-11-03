@@ -3,8 +3,10 @@ package application
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Binit-Dhakal/Foody/accounts/internal/domain"
+	jwtutils "github.com/Binit-Dhakal/Foody/accounts/internal/utils"
 	"github.com/Binit-Dhakal/Foody/internal/db"
 	"github.com/Binit-Dhakal/Foody/internal/mailer"
 	"github.com/Binit-Dhakal/Foody/internal/monolith"
@@ -14,6 +16,7 @@ import (
 type UserService interface {
 	RegisterCustomer(ctx context.Context, dto *domain.RegisterUserRequest) error
 	RegisterVendor(ctx context.Context, dto *domain.RegisterResturantRequest) error
+	ActivateUser(ctx context.Context, token string) error
 }
 
 type userService struct {
@@ -21,14 +24,16 @@ type userService struct {
 	uow        db.UnitOfWork
 	repo       domain.UserRepository
 	mailer     *mailer.Mailer
+	tokenMgr   jwtutils.TokenManager
 }
 
-func NewUserService(uow db.UnitOfWork, repo domain.UserRepository, mailer *mailer.Mailer, background monolith.BackgroundRunner) UserService {
+func NewUserService(uow db.UnitOfWork, repo domain.UserRepository, mailer *mailer.Mailer, background monolith.BackgroundRunner, tokenMgr jwtutils.TokenManager) UserService {
 	return &userService{
 		uow:        uow,
 		repo:       repo,
 		background: background,
 		mailer:     mailer,
+		tokenMgr:   tokenMgr,
 	}
 }
 
@@ -65,8 +70,18 @@ func (u *userService) RegisterCustomer(ctx context.Context, dto *domain.Register
 		return err
 	}
 
+	activationToken, err := u.tokenMgr.GenerateActivationToken(user.ID, 6*time.Hour)
+	if err != nil {
+		return err
+	}
+
+	activationURL := fmt.Sprintf("http://localhost:8080/api/accounts/activate/%s", activationToken)
+
 	u.background.Run(func() {
-		err = u.mailer.Send(user.Email, "user_registration.tmpl", user)
+		err = u.mailer.Send(user.Email, "user_registration.tmpl", map[string]any{
+			"Name":          user.Name,
+			"ActivationURL": activationURL,
+		})
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -118,9 +133,18 @@ func (u *userService) RegisterVendor(ctx context.Context, dto *domain.RegisterRe
 	if err := tx.Commit(ctx); err != nil {
 		return err
 	}
+	activationToken, err := u.tokenMgr.GenerateActivationToken(user.ID, 6*time.Hour)
+	if err != nil {
+		return err
+	}
+
+	activationURL := fmt.Sprintf("http://localhost:8080/api/accounts/activate/%s", activationToken)
 
 	u.background.Run(func() {
-		err = u.mailer.Send(user.Email, "user_registration.tmpl", user)
+		err = u.mailer.Send(user.Email, "vendor_registration.tmpl", map[string]any{
+			"Name":          user.Name,
+			"ActivationURL": activationURL,
+		})
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -128,4 +152,34 @@ func (u *userService) RegisterVendor(ctx context.Context, dto *domain.RegisterRe
 	})
 
 	return nil
+}
+
+func (u *userService) ActivateUser(ctx context.Context, token string) error {
+	userID, err := u.tokenMgr.VerifyActivationToken(token)
+	if err != nil {
+		return err
+	}
+
+	user, err := u.repo.GetByUserID(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	if user.IsActive {
+		return domain.ErrUserAlreadyActive
+	}
+
+	tx, err := u.uow.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	user.IsActive = true
+	err = u.repo.UpdateUser(ctx, tx, user)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }

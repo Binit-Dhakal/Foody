@@ -51,7 +51,7 @@ func (u *userRepository) CreateVendor(ctx context.Context, tx db.Tx, vendor *dom
 
 func (u *userRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	queryByEmail := `
-		SELECT id, full_name, email, phone_number,role, is_admin, password_hash from users where email=$1
+		SELECT id, full_name, email, phone_number,role, is_admin,is_active, password_hash from users where email=$1
 	`
 
 	var user domain.User
@@ -62,6 +62,7 @@ func (u *userRepository) GetByEmail(ctx context.Context, email string) (*domain.
 		&user.PhoneNumber,
 		&user.Role,
 		&user.IsAdmin,
+		&user.IsActive,
 		&user.PasswordHash,
 	)
 	if err != nil {
@@ -80,10 +81,34 @@ func (u *userRepository) UpdateUser(ctx context.Context, tx db.Tx, user *domain.
 			is_admin=$4,
 			last_login=$5,
 			password_hash=$6,
-			updated_at=$7
-		WHERE id=$8
+			is_active=$7,
+			updated_at=$8
+		WHERE id=$9
 	`
-	args := []any{user.Name, user.Email, user.PhoneNumber, user.IsAdmin, user.LastLogin, user.PasswordHash, time.Now(), user.ID}
+	args := []any{user.Name, user.Email, user.PhoneNumber, user.IsAdmin, user.LastLogin, user.PasswordHash, user.IsActive, time.Now(), user.ID}
 	_, err := tx.Exec(ctx, query, args...)
 	return err
+}
+
+func (u *userRepository) GetByUserID(ctx context.Context, id string) (*domain.User, error) {
+	queryByEmail := `
+		SELECT id, full_name, email, phone_number,role, is_admin, is_active, password_hash from users where id=$1
+	`
+
+	var user domain.User
+	err := u.pool.QueryRow(ctx, queryByEmail, id).Scan(
+		&user.ID,
+		&user.Name,
+		&user.Email,
+		&user.PhoneNumber,
+		&user.Role,
+		&user.IsAdmin,
+		&user.IsActive,
+		&user.PasswordHash,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }

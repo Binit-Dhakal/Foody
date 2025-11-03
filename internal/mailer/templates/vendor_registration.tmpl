@@ -1,26 +1,44 @@
-{{define "subject"}}Welcome to Foody exclusive resturant!{{end}}
-{{define "plainBody"}}
-Hi,
-Thanks for signing up for a Foody vendor account. We're excited to have you on board!
-Please wait patiently for your vendor account to be approved. Fill all the profile details. Our Vendor Service will shortly contact you for further details if needed.
-For future reference, your user ID number is {{.ID}}.
+{{ define "subject" }}Welcome to Foody Exclusive Restaurant Program!{{ end }}
+{{ define "plainBody" }}
+Hi {{.Name}},
+Thanks for signing up for a Foody vendor account! We're excited to have your restaurant join our platform.
+To activate your vendor account, please click the link below:
+{{.ActivationURL}}
+After activation, please complete your profile details. Our Vendor Service team will review your submission and contact you for further details if needed.
+If you didn’t register as a Foody vendor, you can safely ignore this email.
 Thanks,
 The Foody Team
-{{end}}
-{{define "htmlBody"}}
-<!doctype html>
+{{ end }}
+{{ define "htmlBody" }}
+<!DOCTYPE html>
 <html>
-<head>
-<meta name="viewport" content="width=device-width" />
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-</head>
-<body>
-<p>Hi,</p>
-<p>Thanks for signing up for a Foody vendor account. We're excited to have you on board!<p>
-<p>Please wait patiently for your vendor account to be approved. Fill all the profile details. Our Vendor Service will shortly contact you for further details if needed.</p>
-<p>For future reference, your user ID number is {{.ID}}.</p>
-<p>Thanks,</p>
-<p>The Foody Team</p>
-</body>
+    <head>
+        <meta name="viewport" content="width=device-width" />
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    </head>
+    <body>
+        <p>Hi {{.Name}},</p>
+        <p>
+            Thanks for signing up for a <strong>Foody vendor account</strong>! We're excited to have your restaurant join our platform.
+        </p>
+        <p>To activate your vendor account, please click the button below:</p>
+        <p>
+            <a href="{{.ActivationURL}}"
+               style="background-color: #ff5722;
+                      color: white;
+                      padding: 10px 20px;
+                      text-decoration: none;
+                      border-radius: 5px">Activate Vendor Account</a>
+        </p>
+        <p>
+            After activation, please complete your profile details. Our Vendor Service team will review your submission and contact you for further details if needed.
+        </p>
+        <p>If you didn’t register as a Foody vendor, you can safely ignore this email.</p>
+        <p>
+            Thanks,
+            <br>
+            The Foody Team
+        </p>
+    </body>
 </html>
-{{end}}
+{{ end }}

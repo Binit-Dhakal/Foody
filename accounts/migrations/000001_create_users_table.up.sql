@@ -6,6 +6,7 @@ CREATE TABLE users (
     phone_number VARCHAR(15),
     role SMALLINT,
     is_admin BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT FALSE,
     password_hash TEXT NOT NULL,
     last_login TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW(),

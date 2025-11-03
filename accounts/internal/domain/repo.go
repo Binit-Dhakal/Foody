@@ -13,6 +13,7 @@ type UserRepository interface {
 	UpdateUser(ctx context.Context, tx db.Tx, user *User) error
 
 	GetByEmail(ctx context.Context, email string) (*User, error)
+	GetByUserID(ctx context.Context, id string) (*User, error)
 }
 
 type TokenRepository interface {

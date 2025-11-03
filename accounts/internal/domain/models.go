@@ -18,6 +18,7 @@ type User struct {
 	PhoneNumber  string
 	Role         int
 	IsAdmin      bool
+	IsActive     bool
 	LastLogin    time.Time
 	PasswordHash string
 	CreatedAt    time.Time

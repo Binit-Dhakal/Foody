@@ -7,10 +7,8 @@ import (
 	"time"
 
 	"github.com/Binit-Dhakal/Foody/accounts/internal/domain"
+	"github.com/Binit-Dhakal/Foody/accounts/internal/utils"
 	"github.com/Binit-Dhakal/Foody/internal/db"
-	"github.com/Binit-Dhakal/Foody/internal/jwtutil"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -22,65 +20,20 @@ type AuthService interface {
 
 type authService struct {
 	uow       db.UnitOfWork
-	secretKey []byte
 	tokenRepo domain.TokenRepository
 	userRepo  domain.UserRepository
+	tokenMgr  utils.TokenManager
 }
 
 var _ AuthService = (*authService)(nil)
 
-func NewAuthService(uow db.UnitOfWork, secretKey string, tokenRepo domain.TokenRepository, userRepo domain.UserRepository) *authService {
-	if secretKey == "" {
-		panic("JWT secret key cannot be empty")
-	}
+func NewAuthService(uow db.UnitOfWork, tokenRepo domain.TokenRepository, userRepo domain.UserRepository, jwtTokenManager utils.TokenManager) *authService {
 	return &authService{
 		uow:       uow,
-		secretKey: []byte(secretKey),
 		tokenRepo: tokenRepo,
 		userRepo:  userRepo,
+		tokenMgr:  jwtTokenManager,
 	}
-}
-
-func (a *authService) generateToken(user *domain.User) (*domain.Token, error) {
-	accessClaims := &jwtutil.CustomClaims{
-		UserID: user.ID,
-		RoleID: user.Role,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
-			Issuer:    "foody",
-			Subject:   user.ID,
-		},
-	}
-
-	accessToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(a.secretKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to sign access token: %w", err)
-	}
-
-	jti, err := uuid.NewRandom()
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate UUID for JIT: %w", err)
-	}
-
-	refreshExpiry := time.Now().Add(time.Hour * 24 * 15)
-	refreshClaims := &jwt.RegisteredClaims{
-		Issuer:  "foody",
-		Subject: user.ID,
-		ID:      jti.String(),
-	}
-
-	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString(a.secretKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to sign refresh token: %w", err)
-	}
-
-	return &domain.Token{
-		Token:        accessToken,
-		UserID:       user.ID,
-		RefreshToken: refreshToken,
-		RoleID:       user.Role,
-		ExpiresAt:    refreshExpiry,
-	}, nil
 }
 
 func (a *authService) LoginUser(ctx context.Context, dto *domain.LoginUserRequest) (*domain.Token, error) {
@@ -89,7 +42,7 @@ func (a *authService) LoginUser(ctx context.Context, dto *domain.LoginUserReques
 		return nil, errors.New("invalid email or password")
 	}
 
-	token, err := a.generateToken(user)
+	token, err := a.tokenMgr.GenerateAuthenticationToken(user)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +84,7 @@ func (a *authService) TokenRefresh(ctx context.Context, refreshToken string) (*d
 	}
 
 	user := &domain.User{ID: oldToken.UserID, Role: oldToken.RoleID}
-	newToken, err := a.generateToken(user)
+	newToken, err := a.tokenMgr.GenerateAuthenticationToken(user)
 	if err != nil {
 		return nil, err
 	}

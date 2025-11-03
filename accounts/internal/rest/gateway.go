@@ -159,3 +159,27 @@ func (h *AccountHandler) LogoutUser(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+func (h *AccountHandler) ActivateUser(w http.ResponseWriter, r *http.Request) {
+	token := chi.URLParam(r, "token")
+	if token == "" {
+		http.Error(w, "invalid activation token", http.StatusBadRequest)
+		return
+	}
+
+	err := h.userSvc.ActivateUser(r.Context(), token)
+	if err != nil {
+		switch err {
+		case domain.ErrUserAlreadyActive:
+			http.Error(w, "user already active", http.StatusBadRequest)
+			return
+		default:
+			http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Account successfully activated"))
+
+}
