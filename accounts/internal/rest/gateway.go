@@ -2,12 +2,17 @@ package rest
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/Binit-Dhakal/Foody/accounts/internal/application"
 	"github.com/Binit-Dhakal/Foody/accounts/internal/domain"
+	"github.com/Binit-Dhakal/Foody/internal/cookies"
 	"github.com/go-chi/chi/v5"
+	"runtime/debug"
 )
 
 type AccountHandler struct {
@@ -81,9 +86,73 @@ func (h *AccountHandler) AuthenticateUser(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	_, err := h.authSvc.Login(r.Context(), &req)
+	token, err := h.authSvc.LoginUser(r.Context(), &req)
 	if err != nil {
+		debug.PrintStack()
 		http.Error(w, "failed to authenticate:"+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	accessCookie := &http.Cookie{
+		Name:     "accessToken",
+		Value:    token.Token,
+		Expires:  time.Now().Add(24 * time.Hour),
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	cookies.Write(w, accessCookie)
+
+	refreshCookie := &http.Cookie{
+		Name:     "refreshToken",
+		Value:    token.RefreshToken,
+		Expires:  time.Now().Add(15 * 24 * time.Hour),
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
+	cookies.Write(w, refreshCookie)
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *AccountHandler) LogoutUser(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("refreshToken")
+	if err != nil {
+		switch {
+		case errors.Is(err, http.ErrNoCookie):
+			http.Error(w, "cookie not found", http.StatusBadRequest)
+		default:
+			log.Println(err)
+			http.Error(w, "server error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	err = h.authSvc.LogoutUser(r.Context(), cookie.Value)
+	if err != nil {
+		http.Error(w, "failed to logout", http.StatusInternalServerError)
+		return
+	}
+
+	clearCookie := func(name string) {
+		http.SetCookie(w, &http.Cookie{
+			Name:     name,
+			Value:    "",
+			Path:     "/",
+			Expires:  time.Unix(0, 0),
+			MaxAge:   -1,
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteLaxMode,
+		})
+	}
+
+	clearCookie("accessToken")
+	clearCookie("refreshToken")
+
+	w.WriteHeader(http.StatusOK)
 }

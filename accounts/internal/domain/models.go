@@ -8,6 +8,8 @@ const (
 	RoleCustomer = 2
 )
 
+var AnonymousUser = User{}
+
 type User struct {
 	ID           string
 	Name         string

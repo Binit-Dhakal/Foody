@@ -1,5 +1,5 @@
 CREATE TABLE users (
-    id BIGSERIAL PRIMARY KEY,
+    id uuid PRIMARY KEY  default gen_random_uuid(),
     full_name VARCHAR(50) NOT NULL,
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
@@ -7,13 +7,14 @@ CREATE TABLE users (
     role SMALLINT,
     is_admin BOOLEAN DEFAULT FALSE,
     password_hash TEXT NOT NULL,
+    last_login TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE user_profiles (
-    id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    id  uuid PRIMARY KEY default gen_random_uuid(),
+    user_id uuid UNIQUE REFERENCES users(id) ON DELETE CASCADE,
     profile_picture VARCHAR(255),
     cover_photo VARCHAR(255),
     address_line1 TEXT,

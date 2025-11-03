@@ -1,11 +1,11 @@
-ALTER TABLE users ADD COLUMN last_login TIMESTAMP;
-
-CREATE TABLE sessions (
-    session_key TEXT PRIMARY KEY,
-    user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
-    token_hash BYTEA NOT NULL,
-    scope TEXT,
-    expires_at TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+create table if not exists tokens (
+        id serial primary key,
+        user_id uuid not null references users(id) on delete cascade,
+        refresh_token text not null unique,
+        role_id smallint,
+        expires_at TIMESTAMPTZ not null,
+        created_at TIMESTAMPTZ not null default NOW()
 );
+
+CREATE index idx_tokens_user_id on tokens(user_id);
 

@@ -6,6 +6,8 @@ require (
 	github.com/alexedwards/argon2id v1.0.0
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-chi/httplog v0.3.2
+	github.com/golang-jwt/jwt/v5 v5.3.0
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/rs/zerolog v1.34.0

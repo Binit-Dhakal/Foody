@@ -20,15 +20,17 @@ func (Module) Startup(ctx context.Context, mono monolith.Monolith) (err error) {
 	mailer := mono.Mailer()
 
 	userRepo := postgres.NewUserRepository(mono.DB())
-	sessionRepo := postgres.NewSessionRepository()
+	tokenRepo := postgres.NewTokenRepository(mono.DB())
 
 	userSvc := application.NewUserService(uow, userRepo, mailer, bg)
-	authSvc := application.NewAuthService(uow, userRepo, sessionRepo)
+	authSvc := application.NewAuthService(uow, mono.Config().JWT.Secret, tokenRepo, userRepo)
 
 	restHandler := rest.NewAccountHandler(mono.Mux(), userSvc, authSvc)
 
 	mux.Post("/api/accounts/registerUser", restHandler.RegisterUser)
 	mux.Post("/api/accounts/registerVendor", restHandler.RegisterResturant)
+	mux.Post("/api/accounts/login", restHandler.AuthenticateUser)
+	mux.Get("/api/accounts/logout", restHandler.LogoutUser)
 
 	return nil
 }

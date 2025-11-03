@@ -15,7 +15,8 @@ type UserRepository interface {
 	GetByEmail(ctx context.Context, email string) (*User, error)
 }
 
-type SessionRepository interface {
-	CreateSession(ctx context.Context, tx db.Tx, token *Token) error
-	DeleteAllForUser(ctx context.Context, tx db.Tx, scope string, userID string) error
+type TokenRepository interface {
+	CreateToken(ctx context.Context, tx db.Tx, token *Token) error
+	FindByRefreshToken(ctx context.Context, refreshToken string) (*Token, error)
+	RevokeRefreshToken(ctx context.Context, tx db.Tx, refreshToken string) error
 }

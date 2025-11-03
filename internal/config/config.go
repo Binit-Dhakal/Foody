@@ -23,12 +23,17 @@ type (
 		Sender   string `required:"true"`
 	}
 
+	JWTSecret struct {
+		Secret string `required:"true"`
+	}
+
 	AppConfig struct {
 		Environment     string
 		LogLevel        string `envconfig:"LOG_LEVEL" default:"DEBUG"`
 		PG              PGConfig
 		Web             WebConfig
 		SMTP            SMTPConfig
+		JWT             JWTSecret
 		ShutdownTimeout time.Duration `envconfig:"SHUTDOWN_TIMEOUT" default:"30s"`
 	}
 )

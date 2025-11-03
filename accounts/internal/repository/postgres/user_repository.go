@@ -82,7 +82,7 @@ func (u *userRepository) UpdateUser(ctx context.Context, tx db.Tx, user *domain.
 			updated_at=$7
 		WHERE id=$8
 	`
-	args := []any{user.Name, user.Email, user.PhoneNumber, user.IsAdmin, user.LastLogin, user.PasswordHash, time.Now()}
+	args := []any{user.Name, user.Email, user.PhoneNumber, user.IsAdmin, user.LastLogin, user.PasswordHash, time.Now(), user.ID}
 	_, err := tx.Exec(ctx, query, args...)
 	return err
 }
