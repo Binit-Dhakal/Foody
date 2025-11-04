@@ -8,8 +8,6 @@ import (
 	"github.com/Binit-Dhakal/Foody/accounts/internal/domain"
 	jwtutils "github.com/Binit-Dhakal/Foody/accounts/internal/utils"
 	"github.com/Binit-Dhakal/Foody/internal/db"
-	"github.com/Binit-Dhakal/Foody/internal/mailer"
-	"github.com/Binit-Dhakal/Foody/internal/monolith"
 	"github.com/Binit-Dhakal/Foody/internal/utils"
 )
 
@@ -20,20 +18,18 @@ type UserService interface {
 }
 
 type userService struct {
-	background monolith.BackgroundRunner
-	uow        db.UnitOfWork
-	repo       domain.UserRepository
-	mailer     *mailer.Mailer
-	tokenMgr   jwtutils.TokenManager
+	uow                db.UnitOfWork
+	repo               domain.UserRepository
+	notificationClient domain.NotificationSender
+	tokenMgr           jwtutils.TokenManager
 }
 
-func NewUserService(uow db.UnitOfWork, repo domain.UserRepository, mailer *mailer.Mailer, background monolith.BackgroundRunner, tokenMgr jwtutils.TokenManager) UserService {
+func NewUserService(uow db.UnitOfWork, repo domain.UserRepository, notificationClient domain.NotificationSender, tokenMgr jwtutils.TokenManager) UserService {
 	return &userService{
-		uow:        uow,
-		repo:       repo,
-		background: background,
-		mailer:     mailer,
-		tokenMgr:   tokenMgr,
+		uow:                uow,
+		repo:               repo,
+		notificationClient: notificationClient,
+		tokenMgr:           tokenMgr,
 	}
 }
 
@@ -77,15 +73,10 @@ func (u *userService) RegisterCustomer(ctx context.Context, dto *domain.Register
 
 	activationURL := fmt.Sprintf("http://localhost:8080/api/accounts/activate/%s", activationToken)
 
-	u.background.Run(func() {
-		err = u.mailer.Send(user.Email, "user_registration.tmpl", map[string]any{
-			"Name":          user.Name,
-			"ActivationURL": activationURL,
-		})
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
+	u.notificationClient.SendRegisterCustomer(ctx, &domain.RegisterCustomerNotify{
+		Name:          user.Name,
+		Email:         user.Email,
+		ActivationURL: activationURL,
 	})
 
 	// we need to send user detail
@@ -140,15 +131,10 @@ func (u *userService) RegisterVendor(ctx context.Context, dto *domain.RegisterRe
 
 	activationURL := fmt.Sprintf("http://localhost:8080/api/accounts/activate/%s", activationToken)
 
-	u.background.Run(func() {
-		err = u.mailer.Send(user.Email, "vendor_registration.tmpl", map[string]any{
-			"Name":          user.Name,
-			"ActivationURL": activationURL,
-		})
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
+	u.notificationClient.SendRegisterVendor(ctx, &domain.RegisterVendorNotify{
+		Name:          user.Name,
+		ActivationURL: activationURL,
+		Email:         user.Email,
 	})
 
 	return nil

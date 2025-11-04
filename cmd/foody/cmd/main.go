@@ -14,6 +14,7 @@ import (
 	"github.com/Binit-Dhakal/Foody/internal/monolith"
 	"github.com/Binit-Dhakal/Foody/internal/setup"
 	"github.com/Binit-Dhakal/Foody/internal/waiter"
+	"github.com/Binit-Dhakal/Foody/notifications"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/httplog"
 	"google.golang.org/grpc"
@@ -92,6 +93,7 @@ func run() (err error) {
 
 	m.modules = []monolith.Module{
 		&accounts.Module{},
+		&notifications.Module{},
 	}
 
 	if err := m.startupModules(); err != nil {

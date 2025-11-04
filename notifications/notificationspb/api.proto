@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package notificationspb;
+
+service NotificationService {
+  rpc NotifyCustomerRegistered(NotifyCustomerRegisteredRequest) returns (NotifyCustomerRegisteredResponse) {}
+  rpc NotifyVendorRegistered(NotifyVendorRegisteredRequest) returns (NotifyVendorRegisteredResponse) {}
+}
+
+message NotifyCustomerRegisteredRequest {
+  string name = 1;
+  string activation_url = 2;
+  string email = 3;
+}
+message NotifyCustomerRegisteredResponse {}
+
+message NotifyVendorRegisteredRequest {
+  string name = 1;
+  string activation_url = 2;
+  string email = 3;
+}
+message NotifyVendorRegisteredResponse {}

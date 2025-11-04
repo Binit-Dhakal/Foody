@@ -17,16 +17,19 @@ type Module struct{}
 func (Module) Startup(ctx context.Context, mono monolith.Monolith) (err error) {
 	mux := mono.Mux()
 	uow := db.NewPgxUnitOfWork(mono.DB())
-	bg := mono.Background()
-
-	mailer := mono.Mailer()
 
 	jwtMgr := utils.New(mono.Config().JWT.Secret)
 
 	userRepo := postgres.NewUserRepository(mono.DB())
 	tokenRepo := postgres.NewTokenRepository(mono.DB())
 
-	userSvc := application.NewUserService(uow, userRepo, mailer, bg, jwtMgr)
+	conn, err := grpc.Dial(ctx, mono.Config().Rpc.Address())
+	if err != nil {
+		return err
+	}
+	notificationClient := grpc.NewNotificationSender(conn)
+
+	userSvc := application.NewUserService(uow, userRepo, notificationClient, jwtMgr)
 	authSvc := application.NewAuthService(uow, tokenRepo, userRepo, jwtMgr)
 
 	restHandler := rest.NewAccountHandler(mono.Mux(), userSvc, authSvc)
