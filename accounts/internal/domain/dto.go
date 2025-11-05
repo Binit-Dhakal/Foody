@@ -6,7 +6,6 @@ import (
 
 type RegisterUserRequest struct {
 	Name            string               `json:"name"`
-	Username        string               `json:"username"`
 	Email           string               `json:"email"`
 	Password        string               `json:"password"`
 	ConfirmPassword string               `json:"confirmPassword"`
@@ -18,7 +17,6 @@ func (r *RegisterUserRequest) Validate() {
 	v := r.Validator
 
 	validateName(v, r.Name, "name")
-	validateName(v, r.Username, "username")
 	validateEmail(v, r.Email)
 	validatePassword(v, r.Password)
 
@@ -27,7 +25,6 @@ func (r *RegisterUserRequest) Validate() {
 
 type RegisterResturantRequest struct {
 	Name            string `json:"name"`
-	Username        string `json:"username"`
 	Email           string `json:"email"`
 	License         string `json:"license"`
 	ResturantName   string `json:"resturantName"`
@@ -42,7 +39,6 @@ func (r *RegisterResturantRequest) Validate() {
 	v := r.Validator
 
 	validateName(v, r.Name, "name")
-	validateName(v, r.Username, "username")
 	validateEmail(v, r.Email)
 	validatePassword(v, r.Password)
 	validateName(v, r.ResturantName, "resturantName")
@@ -62,8 +58,7 @@ func (r *LoginUserRequest) Validate() {
 }
 
 type SessionDataResponse struct {
-	UserID   string `json:"userID"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Role     string `json:"role"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Role  string `json:"role"`
 }

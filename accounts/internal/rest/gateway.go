@@ -4,8 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/Binit-Dhakal/Foody/accounts/internal/application"
@@ -53,11 +57,49 @@ func (h *AccountHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AccountHandler) RegisterResturant(w http.ResponseWriter, r *http.Request) {
-	var req domain.RegisterResturantRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request payload", http.StatusBadRequest)
+	// max(10 MB)
+	err := r.ParseMultipartForm(5 << 20)
+	if err != nil {
+		http.Error(w, "Error parsing form", http.StatusBadRequest)
 		return
 	}
+	req := domain.RegisterResturantRequest{
+		Name:            r.FormValue("fullName"),
+		Email:           r.FormValue("email"),
+		ResturantName:   r.FormValue("resturantName"),
+		Password:        r.FormValue("password"),
+		ConfirmPassword: r.FormValue("confirmPassword"),
+	}
+
+	// Handle file separately
+	file, header, err := r.FormFile("resturantLicense")
+	if err != nil {
+		http.Error(w, "Restaurant license is required", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	safeResturantName := strings.ReplaceAll(req.ResturantName, "", "_")
+	ext := filepath.Ext(header.Filename)
+	timestamp := time.Now().UnixNano()
+
+	// Save file somewhere (local folder for now)
+	fileName := fmt.Sprintf("%s_%d%s", safeResturantName, timestamp, ext)
+	filePath := filepath.Join("./uploads", fileName)
+	f, err := os.Create(filePath)
+	if err != nil {
+		http.Error(w, "Failed to save file "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer f.Close()
+	_, err = io.Copy(f, file)
+	if err != nil {
+		http.Error(w, "Failed to save file", http.StatusInternalServerError)
+		return
+	}
+
+	// Set the file path in your request object
+	req.License = "./uploads/" + fileName
 
 	req.Validate()
 	if req.Validator.HasErrors() {
@@ -65,7 +107,7 @@ func (h *AccountHandler) RegisterResturant(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	err := h.userSvc.RegisterVendor(r.Context(), &req)
+	err = h.userSvc.RegisterVendor(r.Context(), &req)
 	if err != nil {
 		http.Error(w, "failed to register resturant:"+err.Error(), http.StatusInternalServerError)
 		return

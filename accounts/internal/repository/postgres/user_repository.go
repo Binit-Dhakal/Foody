@@ -23,11 +23,11 @@ func NewUserRepository(pool *pgxpool.Pool) domain.UserRepository {
 
 func (u *userRepository) CreateUser(ctx context.Context, tx db.Tx, user *domain.User) error {
 	queryUser := `
-		INSERT into users (full_name, username, email, phone_number, role, is_admin, password_hash, created_at, updated_at)
-		VALUES 	($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+		INSERT into users (full_name,  email, phone_number, role, is_admin, password_hash, created_at, updated_at)
+		VALUES 	($1, $2, $3, $4, $5, $6, NOW(), NOW())
 		RETURNING id
 	`
-	userArgs := []any{user.Name, user.Username, user.Email, user.PhoneNumber, user.Role, user.IsAdmin, user.PasswordHash}
+	userArgs := []any{user.Name, user.Email, user.PhoneNumber, user.Role, user.IsAdmin, user.PasswordHash}
 	return tx.QueryRow(ctx, queryUser, userArgs...).Scan(&user.ID)
 }
 

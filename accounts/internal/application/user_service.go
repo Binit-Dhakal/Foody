@@ -43,7 +43,6 @@ func (u *userService) RegisterCustomer(ctx context.Context, dto *domain.Register
 
 	user := &domain.User{
 		Name:         dto.Name,
-		Username:     dto.Username,
 		Email:        dto.Email,
 		Role:         domain.RoleCustomer,
 		PasswordHash: hashedPw,
@@ -93,7 +92,6 @@ func (u *userService) RegisterVendor(ctx context.Context, dto *domain.RegisterRe
 
 	user := &domain.User{
 		Name:         dto.Name,
-		Username:     dto.Username,
 		Email:        dto.Email,
 		Role:         domain.RoleVendor,
 		PasswordHash: passwordHash,
@@ -186,10 +184,9 @@ func (u *userService) GetSession(ctx context.Context, userId string) (*domain.Se
 	}
 
 	data := &domain.SessionDataResponse{
-		UserID:   userId,
-		Role:     role,
-		Email:    user.Email,
-		Username: user.Username,
+		Role:  role,
+		Email: user.Email,
+		Name:  user.Name,
 	}
 	return data, err
 }

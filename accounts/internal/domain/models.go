@@ -13,7 +13,6 @@ var AnonymousUser = User{}
 type User struct {
 	ID           string
 	Name         string
-	Username     string
 	Email        string
 	PhoneNumber  string
 	Role         int
