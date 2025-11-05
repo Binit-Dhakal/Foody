@@ -16,6 +16,7 @@ import (
 	"github.com/Binit-Dhakal/Foody/internal/waiter"
 	"github.com/Binit-Dhakal/Foody/notifications"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/go-chi/httplog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -43,6 +44,14 @@ func infraSetup(app *app) (err error) {
 	// Web Server
 	app.mux = chi.NewMux()
 	app.mux.Use(httplog.RequestLogger(app.logger))
+	app.mux.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   app.Config().AllowedOriginsList,
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}))
 
 	// GRPC server
 	server := grpc.NewServer()

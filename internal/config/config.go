@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/kelseyhightower/envconfig"
@@ -28,14 +29,16 @@ type (
 	}
 
 	AppConfig struct {
-		Environment     string
-		LogLevel        string `envconfig:"LOG_LEVEL" default:"DEBUG"`
-		PG              PGConfig
-		Web             WebConfig
-		Rpc             RpcConfig
-		SMTP            SMTPConfig
-		JWT             JWTSecret
-		ShutdownTimeout time.Duration `envconfig:"SHUTDOWN_TIMEOUT" default:"30s"`
+		Environment        string
+		LogLevel           string `envconfig:"LOG_LEVEL" default:"DEBUG"`
+		PG                 PGConfig
+		Web                WebConfig
+		Rpc                RpcConfig
+		SMTP               SMTPConfig
+		JWT                JWTSecret
+		AllowedOrigins     string `envconfig:"ALLOWED_ORIGINS" required:"true"`
+		AllowedOriginsList []string
+		ShutdownTimeout    time.Duration `envconfig:"SHUTDOWN_TIMEOUT" default:"30s"`
 	}
 )
 
@@ -63,6 +66,10 @@ func InitConfig() (cfg AppConfig, err error) {
 	}
 
 	err = envconfig.Process("", &cfg)
+
+	origins := cfg.AllowedOrigins
+
+	cfg.AllowedOriginsList = strings.Split(origins, ",")
 
 	return
 }

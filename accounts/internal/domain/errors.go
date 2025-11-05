@@ -3,5 +3,6 @@ package domain
 import "errors"
 
 var (
-	ErrUserAlreadyActive = errors.New("user already active")
+	ErrInvalidCredentials = errors.New("invalid email or password")
+	ErrUserAlreadyActive  = errors.New("user already active")
 )

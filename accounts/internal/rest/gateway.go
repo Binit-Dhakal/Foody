@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	"runtime/debug"
-
 	"github.com/Binit-Dhakal/Foody/accounts/internal/application"
 	"github.com/Binit-Dhakal/Foody/accounts/internal/domain"
 	"github.com/Binit-Dhakal/Foody/internal/cookies"
@@ -91,7 +89,10 @@ func (h *AccountHandler) AuthenticateUser(w http.ResponseWriter, r *http.Request
 
 	token, err := h.authSvc.LoginUser(r.Context(), &req)
 	if err != nil {
-		debug.PrintStack()
+		if err == domain.ErrInvalidCredentials {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 		http.Error(w, "failed to authenticate:"+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -122,6 +123,7 @@ func (h *AccountHandler) AuthenticateUser(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusOK)
 }
 
+// delete refresh token and also set cookie to "empty" value
 func (h *AccountHandler) LogoutUser(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("refreshToken")
 	if err != nil {
@@ -182,4 +184,26 @@ func (h *AccountHandler) ActivateUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Account successfully activated"))
 
+}
+func (h *AccountHandler) GetSession(w http.ResponseWriter, r *http.Request) {
+	userId, _ := ctxutil.GetContext(r.Context(), ctxutil.UserContextKey)
+	if userId == "" {
+		http.Error(w, "empty session", http.StatusBadRequest)
+		return
+	}
+
+	sessionData, err := h.userSvc.GetSession(r.Context(), userId.(string))
+	if err != nil {
+		http.Error(w, "Error:"+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	byteData, err := json.Marshal(sessionData)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(byteData)
+	w.WriteHeader(http.StatusOK)
 }

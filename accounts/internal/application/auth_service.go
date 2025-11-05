@@ -7,8 +7,9 @@ import (
 	"time"
 
 	"github.com/Binit-Dhakal/Foody/accounts/internal/domain"
-	"github.com/Binit-Dhakal/Foody/accounts/internal/utils"
+	jwtutils "github.com/Binit-Dhakal/Foody/accounts/internal/utils"
 	"github.com/Binit-Dhakal/Foody/internal/db"
+	"github.com/Binit-Dhakal/Foody/internal/utils"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -22,12 +23,12 @@ type authService struct {
 	uow       db.UnitOfWork
 	tokenRepo domain.TokenRepository
 	userRepo  domain.UserRepository
-	tokenMgr  utils.TokenManager
+	tokenMgr  jwtutils.TokenManager
 }
 
 var _ AuthService = (*authService)(nil)
 
-func NewAuthService(uow db.UnitOfWork, tokenRepo domain.TokenRepository, userRepo domain.UserRepository, jwtTokenManager utils.TokenManager) *authService {
+func NewAuthService(uow db.UnitOfWork, tokenRepo domain.TokenRepository, userRepo domain.UserRepository, jwtTokenManager jwtutils.TokenManager) *authService {
 	return &authService{
 		uow:       uow,
 		tokenRepo: tokenRepo,
@@ -39,9 +40,17 @@ func NewAuthService(uow db.UnitOfWork, tokenRepo domain.TokenRepository, userRep
 func (a *authService) LoginUser(ctx context.Context, dto *domain.LoginUserRequest) (*domain.Token, error) {
 	user, err := a.userRepo.GetByEmail(ctx, dto.Email)
 	if err != nil {
-		return nil, errors.New("invalid email or password")
+		return nil, domain.ErrInvalidCredentials
 	}
 
+	ok, err := utils.Matches(dto.Password, user.PasswordHash)
+	if err != nil {
+		return nil, err
+	}
+
+	if !ok {
+		return nil, domain.ErrInvalidCredentials
+	}
 	token, err := a.tokenMgr.GenerateAuthenticationToken(user)
 	if err != nil {
 		return nil, err

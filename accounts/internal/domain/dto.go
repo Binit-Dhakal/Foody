@@ -60,3 +60,10 @@ func (r *LoginUserRequest) Validate() {
 	validateEmail(v, r.Email)
 	validatePassword(v, r.Password)
 }
+
+type SessionDataResponse struct {
+	UserID   string `json:"userID"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Role     string `json:"role"`
+}

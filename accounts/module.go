@@ -39,6 +39,7 @@ func (Module) Startup(ctx context.Context, mono monolith.Monolith) (err error) {
 	mux.Post("/api/accounts/login", restHandler.AuthenticateUser)
 	mux.Get("/api/accounts/logout", restHandler.LogoutUser)
 	mux.Get("/api/accounts/activate/{token}", restHandler.ActivateUser)
+	mux.Get("/api/accounts/session", restHandler.GetSession)
 
 	if err := grpc.RegisterServer(authSvc, mono.RPC()); err != nil {
 		return err

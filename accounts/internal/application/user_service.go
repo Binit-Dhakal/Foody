@@ -15,6 +15,7 @@ type UserService interface {
 	RegisterCustomer(ctx context.Context, dto *domain.RegisterUserRequest) error
 	RegisterVendor(ctx context.Context, dto *domain.RegisterResturantRequest) error
 	ActivateUser(ctx context.Context, token string) error
+	GetSession(ctx context.Context, userID string) (*domain.SessionDataResponse, error)
 }
 
 type userService struct {
@@ -168,4 +169,27 @@ func (u *userService) ActivateUser(ctx context.Context, token string) error {
 	}
 
 	return tx.Commit(ctx)
+}
+
+func (u *userService) GetSession(ctx context.Context, userId string) (*domain.SessionDataResponse, error) {
+	user, err := u.repo.GetByUserID(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	var role string
+	switch user.Role {
+	case 1:
+		role = "vendor"
+	case 2:
+		role = "customer"
+	}
+
+	data := &domain.SessionDataResponse{
+		UserID:   userId,
+		Role:     role,
+		Email:    user.Email,
+		Username: user.Username,
+	}
+	return data, err
 }
