@@ -11,7 +11,6 @@ export const metadata: Metadata = {
     title: 'Sign In',
 };
 
-
 const SignInPage = async () => {
     return (
         <>

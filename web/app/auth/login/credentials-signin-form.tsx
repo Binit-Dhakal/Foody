@@ -44,7 +44,6 @@ const CredentialsSignInForm = () => {
             return;
         }
 
-
         try {
             await signIn(result.data)
             await reloadSession()

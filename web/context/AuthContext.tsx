@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { fetchSession } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 interface User {
   email: string;
@@ -50,3 +51,14 @@ export function useAuth() {
   return context;
 }
 
+export function useRoleRedirect() {
+  const { user } = useAuth();
+  const router = useRouter();
+
+  return () => {
+    if (!user) router.replace('/auth/login');
+    else if (user.role === 'customer') router.replace('/dashboard');
+    else if (user.role === 'vendor') router.replace('/vendor/dashboard');
+    else if (user.role === 'admin') router.replace('/admin/dashboard');
+  };
+}
