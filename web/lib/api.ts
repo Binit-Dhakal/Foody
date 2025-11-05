@@ -1,5 +1,5 @@
 import apiClient from "./api-client";
-import { SignInData, SignUpResturantData, SignUpUserData } from "./validators";
+import { SignInData, SignUpUserData } from "./validators";
 
 export async function fetchSession() {
   const res = await apiClient.get("/accounts/session")
@@ -33,21 +33,11 @@ export async function signUpUser(registerData: SignUpUserData) {
   }
 }
 
-export async function signUpResturant(registerData: SignUpResturantData, license: File) {
-  const formData = new FormData();
-  formData.append("fullName", registerData.fullName);
-  formData.append("email", registerData.email);
-  formData.append("password", registerData.password);
-  formData.append("confirmPassword", registerData.confirmPassword);
-  formData.append("resturantName", registerData.resturantName);
-  formData.append("resturantLicense", license);
 
+export async function logOut() {
   try {
-    await apiClient.post("/accounts/registerVendor", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    await apiClient.get("/accounts/logout")
   } catch (err: any) {
-    throw new Error(err?.response?.data?.message || "Failed to register")
+    throw new Error(err?.response?.data?.message || "Failed to log out")
   }
 }
-

@@ -3,7 +3,7 @@
 import { Input } from '@/components/ui/input';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { signUpResturant } from '@/lib/api';
+import { signUpResturant } from '@/lib/vendor-api';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
